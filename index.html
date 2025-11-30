@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Produk — Zamhry Store</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;background:#071226;color:#e6eef6;padding:28px}
+    .card{max-width:560px;margin:0 auto;background:rgba(255,255,255,0.03);padding:20px;border-radius:12px}
+    h1{color:#60a5fa;text-align:center}
+    label{display:block;margin-top:10px;color:#9aa4b2}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .pay-btns{display:flex;gap:10px;margin-top:8px}
+    .pay-btn{flex:1;padding:10px;border-radius:8px;text-align:center;cursor:pointer;background:rgba(255,255,255,0.03)}
+    .pay-btn.active{background:#2563eb}
+    .payment-info{display:none;margin-top:12px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.02);text-align:center}
+    .qris-img{width:200px;border-radius:8px}
+    .preview{max-width:100%;margin-top:8px;border-radius:8px}
+    button{width:100%;margin-top:14px;padding:12px;border-radius:8px;border:none;background:#3b82f6;color:white;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Form Order</h1>
+    <form id="orderForm" enctype="multipart/form-data">
+      <label>Username Pembeli</label>
+      <input id="name" required placeholder="Masukan Username Tele" />
+      <label>Produk</label>
+      <select id="product" required>
+        <option value="">-- Pilih Produk --</option>
+        <option>Script Valva</option>
+        <option>Base Telegram</option>
+        <option>Tools Anti Bypass</option>
+        <option>Text Bypass Sc</option>
+        <option>Jasa Bikin Logo</option>
+        <option>Jasa Bikin Script</option>
+        <option>Jasa Bikin HTML</option>
+      </select>
+      <label>Catatan (opsional)</label>
+      <textarea id="note" rows="3" placeholder="Detail khusus / revisi / referensi"></textarea>
+
+      <label>Metode Pembayaran</label>
+      <div class="pay-btns">
+        <div id="btnQris" class="pay-btn" onclick="selectPay('QRIS')">QRIS</div>
+        <div id="btnDana" class="pay-btn" onclick="selectPay('Dana')">Dana</div>
+      </div>
+
+      <div id="qrisInfo" class="payment-info">
+        <div>Scan QRIS ini:</div>
+        <!-- ubah URL gambar QRIS sesuai milikmu -->
+        <img src="https://files.catbox.moe/609537.jpg" alt="QRIS" class="qris-img" />
+        <div class="small" style="margin-top:8px;color:#9aa4b2;font-size:13px">Setelah bayar, upload bukti transfer</div>
+      </div>
+
+      <div id="danaInfo" class="payment-info">
+        <div>Transfer ke nomor Dana:</div>
+        <h3 id="danaNum">085714430025</h3>
+        <button type="button" onclick="copyDana()" style="margin-top:8px;padding:8px;border-radius:6px;border:none;background:#3b82f6;color:#fff">Salin Nomor</button>
+      </div>
+
+      <label>Upload Bukti Transfer (foto)</label>
+      <input id="proof" type="file" accept="image/*" required />
+      <img id="preview" class="preview" style="display:none" />
+
+      <button type="submit">Kirim Order</button>
+    </form>
+    <p style="text-align:center;color:#9aa4b2;margin-top:12px;font-size:13px">Butuh bantuan? Kontak admin via Telegram.</p>
+  </div>
+
+<script>
+let selected = '';
+function selectPay(m){
+  selected = m;
+  document.getElementById('btnQris').classList.toggle('active', m==='QRIS');
+  document.getElementById('btnDana').classList.toggle('active', m==='Dana');
+  document.getElementById('qrisInfo').style.display = m==='QRIS' ? 'block' : 'none';
+  document.getElementById('danaInfo').style.display = m==='Dana' ? 'block' : 'none';
+}
+function copyDana(){ navigator.clipboard.writeText(document.getElementById('danaNum').innerText); alert('Nomor Dana disalin'); }
+
+const proof = document.getElementById('proof');
+const preview = document.getElementById('preview');
+proof.addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  preview.src = URL.createObjectURL(f);
+  preview.style.display = 'block';
+});
+
+document.getElementById('orderForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!selected){ alert('Pilih metode pembayaran'); return; }
+  const fd = new FormData();
+  fd.append('name', document.getElementById('name').value);
+  fd.append('product', document.getElementById('product').value);
+  fd.append('note', document.getElementById('note').value);
+  fd.append('payment', selected);
+  fd.append('proof', proof.files[0]);
+
+  try{
+    const r = await fetch('/api/order', { method:'POST', body: fd });
+    if(r.ok){
+      alert('Order terkirim! Admin akan memeriksa dan mengonfirmasi.');
+      e.target.reset(); preview.style.display='none';
+      selectPay(''); // reset UI
+    } else {
+      const t = await r.text();
+      alert('Gagal: '+t);
+    }
+  }catch(err){
+    alert('Gagal menghubungi server. Pastikan server berjalan.');
+    console.error(err);
+  }
+});
+</script>
+</body>
+</html>
