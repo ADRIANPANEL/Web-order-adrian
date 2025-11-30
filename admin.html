@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Login</title>
+  <style>
+    body{font-family:Inter;background:#071226;color:#e6eef6;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .box{background:rgba(255,255,255,0.03);padding:24px;border-radius:10px;width:320px}
+    input{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none;background:rgba(255,255,255,0.02);color:inherit}
+    button{width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#3b82f6;color:white}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2 style="color:#60a5fa;margin:0">Admin Login</h2>
+    <form id="login">
+      <label>Username</label>
+      <input id="u" required />
+      <label>Password</label>
+      <input id="p" type="password" required />
+      <button type="submit">Login</button>
+    </form>
+    <p style="font-size:13px;color:#9aa4b2;margin-top:8px">Masuk dengan akun admin untuk melihat dan konfirmasi order.</p>
+  </div>
+<script>
+document.getElementById('login').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const res = await fetch('/admin/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({u:document.getElementById('u').value, p:document.getElementById('p').value})
+  });
+  if(res.ok) window.location = '/public/dashboard.html';
+  else {
+    const t = await res.text();
+    alert('Gagal login: '+t);
+  }
+});
+</script>
+</body>
+</html>
