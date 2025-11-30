@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Admin</title>
+<style>
+  body{font-family:Inter;background:#071226;color:#e6eef6;padding:18px}
+  .top{display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left}
+  .btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer}
+  .confirm{background:#16a34a;color:white}
+  .reject{background:#ef4444;color:white}
+  .view{background:#2563eb;color:white}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h2>Dashboard Admin</h2>
+    <div>
+      <button id="logout" class="btn" style="background:#334155">Logout</button>
+    </div>
+  </div>
+  <div id="list">Memuat orders...</div>
+
+<script>
+async function loadOrders(){
+  const r = await fetch('/admin/orders');
+  if(r.status===401){ alert('Sesi habis. Login lagi.'); window.location='/public/admin.html'; return;}
+  const data = await r.json();
+  if(!data.length) { document.getElementById('list').innerHTML = '<div style="color:#9aa4b2">Belum ada order.</div>'; return; }
+  let html = '<table><tr><th>#</th><th>Nama</th><th>Produk</th><th>Pembayaran</th><th>Waktu</th><th>Aksi</th></tr>';
+  data.forEach((o,i)=>{
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${o.name}</td>
+      <td>${o.product}<div style="color:#9aa4b2;font-size:12px">${o.note||''}</div></td>
+      <td>${o.payment}</td>
+      <td>${new Date(o.time).toLocaleString()}</td>
+      <td>
+        <button class="btn view" onclick="viewProof('${o.id}')">Lihat Bukti</button>
+        <button class="btn confirm" onclick="updateOrder('${o.id}','confirmed')">✅ Konfirmasi</button>
+        <button class="btn reject" onclick="updateOrder('${o.id}','rejected')">❌ Tolak</button>
+      </td>
+    </tr>`;
+  });
+  html += '</table>';
+  document.getElementById('list').innerHTML = html;
+}
+
+function viewProof(id){
+  window.open('/uploads/'+id);
+}
+
+async function updateOrder(id, status){
+  if(!confirm('Ubah status ke '+status+'?')) return;
+  const r = await fetch('/admin/order/'+id+'/status', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status})
+  });
+  if(r.ok){ alert('Berhasil'); loadOrders(); } else { alert('Gagal'); }
+}
+
+document.getElementById('logout').addEventListener('click', async ()=>{
+  await fetch('/admin/logout'); window.location='/public/admin.html';
+});
+
+loadOrders();
+</script>
+</body>
+</html>
